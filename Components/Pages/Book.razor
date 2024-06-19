@@ -1,0 +1,251 @@
+@page "/"
+@using Library.Entity
+
+<PageTitle>Kitap</PageTitle>
+
+<style>
+    .form-group {
+        display: flex;
+        align-items: center;
+        padding-bottom: 10px;
+        justify-content: space-between;
+    }
+
+        .form-group label {
+            margin-right: 10px;
+        }
+
+    .input {
+        width: 80%;
+    }
+</style>
+
+
+
+<div class="container">
+
+    <div class="row">
+        <div class="col">
+            <div class="form-group">
+                <label>Kitap Adı</label>
+                <div class="input">
+                    <DxTextBox @bind-Text="@nameText" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Yazar</label>
+                <div class="input">
+                    <DxTextBox @bind-Text="@writerText" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Basım Yılı</label>
+                <div class="input">
+                    <DxDateEdit @bind-Date="@yearOfPubliscation"></DxDateEdit>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col">
+            <div class="form-group">
+                <label>Kategori</label>
+                <div class="input">
+                    <DxComboBox Data="@categorys"
+                                @bind-Value="@categoryComboBox"
+                                CssClass="cw-480"
+                                InputId="cbOverview" />
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Adet</label>
+                <div class="input">
+                    <DxSpinEdit @bind-Value="@count" InputId="seOverview" />
+                </div>
+            </div>
+        </div>
+
+
+        <div class="col">
+
+            <div class="d-flex flex-grow flex-wrap" style="align-items:center;">
+                <DxButton RenderStyle="ButtonRenderStyle.Success" onclick="@Save" Enabled="@saveButtonEnable">
+                    @saveButtonTexts[canEdit ? 1 : 0]
+                </DxButton>
+                <DxButton RenderStyle="ButtonRenderStyle.Warning" onclick="@Edit" Enabled="@editButtonEnable">Düzenle</DxButton>
+                <DxButton RenderStyle="ButtonRenderStyle.Primary" onclick="@Cancel" Enabled="@cancelButtonEnable">İptal</DxButton>
+                <DxButton RenderStyle="ButtonRenderStyle.Danger" onclick="@Delete" Enabled="@deleteButtonEnable">Sil</DxButton>
+            </div>
+
+        </div>
+    </div>
+    <div>
+    </div>
+</div>
+
+
+
+<div>
+
+    <DxGrid Data="@bookModels" PageSize="15"
+            ColumnResizeMode="GridColumnResizeMode.NextColumn" TextWrapEnabled="false"
+            FocusedRowEnabled="true" FocusedRowChanged="OnFocusedRowChanged"
+            VirtualScrollingEnabled="false" HighlightRowOnHover="true">
+        <Columns>
+            <DxGridDataColumn FieldName="Id" />
+            <DxGridDataColumn FieldName="Name" />
+            <DxGridDataColumn FieldName="Writer" />
+            <DxGridDataColumn FieldName="YearOfPublication" />
+            <DxGridDataColumn FieldName="Category" />
+            <DxGridDataColumn FieldName="Count" />
+        </Columns>
+    </DxGrid>
+
+</div>
+
+@code {
+    readonly string[] saveButtonTexts = new string[] { "Kaydet", "Güncelle" };
+    readonly string[] categorys = new string[] { "Roman", "Bilim Kurgu", "Tarih", "Felsefe", "Çocuk Kitapları" };
+
+
+    bool saveButtonEnable = true;
+    bool cancelButtonEnable = false;
+    bool deleteButtonEnable = false;
+    bool editButtonEnable = false;
+
+    bool canEdit;
+
+    string nameText { get; set; }
+    string writerText { get; set; }
+    string categoryComboBox { get; set; }
+
+    int count { get; set; }
+
+    DateTime yearOfPubliscation { get; set; }
+
+    BookModel selectedBookModel;
+
+    List<BookModel> bookModels { get; set; } = new();
+
+
+    protected override void OnInitialized()
+    {
+        yearOfPubliscation = DateTime.Today;
+
+        bookModels = new()
+        {
+            new(){Name = "Test"}
+        };
+    }
+
+    void Save()
+    {
+        if (canEdit) // Güncelleme
+        {
+            Update();
+        }
+        else // Ekelem
+        {
+            Insert();
+        }
+    }
+    void Insert()
+    {
+        BookModel bookModel = GetBookModel();
+        bookModel.Id = bookModels.Count;
+
+        bookModels.Add(bookModel);
+    }
+
+    void Update()
+    {
+        BookModel model = GetBookModel();
+
+        selectedBookModel.Name = model.Name;
+       // selectedBookModel.
+        
+    }
+
+    BookModel GetBookModel()
+    {
+        BookModel bookModel = new();
+
+        bookModel.Name = nameText;
+        bookModel.Writer = writerText;
+        bookModel.YearOfPublication = yearOfPubliscation;
+        bookModel.Category = categoryComboBox;
+        bookModel.Count = count;
+
+        return bookModel;
+    }
+
+    void SetAllFieldDefaultValue() => SetAllField(null);
+
+    void SetAllField(BookModel bookModel)
+    {
+        if (bookModel is null)
+        {
+            nameText = "";
+            writerText = "";
+            yearOfPubliscation = DateTime.Today;
+            categoryComboBox = "";
+            count = 0;
+        }
+        else
+        {
+            nameText = bookModel.Name;
+            writerText = bookModel.Writer;
+            yearOfPubliscation = bookModel.YearOfPublication;
+            categoryComboBox = bookModel.Category;
+            count = bookModel.Count;
+        }
+    }
+
+    void Edit()
+    {
+        canEdit = true;
+
+        saveButtonEnable = true;
+        cancelButtonEnable = true;
+
+        editButtonEnable = false;
+        deleteButtonEnable = false;
+
+    }
+
+    void Delete()
+    {
+        editButtonEnable = false;
+        cancelButtonEnable = false;
+        deleteButtonEnable = false;
+
+        selectedBookModel = null;
+        SetAllFieldDefaultValue();
+    }
+    void Cancel()
+    {
+        editButtonEnable = false;
+        cancelButtonEnable = false;
+        deleteButtonEnable = false;
+
+        canEdit = false;
+
+        SetAllFieldDefaultValue();
+    }
+
+    void OnFocusedRowChanged(GridFocusedRowChangedEventArgs e)
+    {
+        editButtonEnable = true;
+        deleteButtonEnable = true;
+
+        cancelButtonEnable = false;
+
+        selectedBookModel = e.DataItem as BookModel;
+        SetAllField(selectedBookModel);
+    }
+}
+
+
