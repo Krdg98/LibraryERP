@@ -1,10 +1,15 @@
 using LibraryERP.Components;
+using LibraryERP.DataBase;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddDbContext<LibraryDbContext>();
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true); // Postgre DateTime Kayýt ederken sorun olmamasý
 
 // DevExpress
 builder.Services.AddDevExpressBlazor(configure => configure.BootstrapVersion = DevExpress.Blazor.BootstrapVersion.v5);
