@@ -111,10 +111,13 @@
 
 </div>
 
+
+
 @code {
 
 	readonly string[] saveButtonTexts = new string[] { "Ekle", "Kaydet", "Güncelle" };
 	readonly string[] categorys = new string[] { "Roman", "Bilim Kurgu", "Tarih", "Felsefe", "Çocuk Kitapları" };
+
 
 
 	enum SaveState { Add, Save, Update }
@@ -267,11 +270,11 @@
 	{
 		UserModel UserModel = new();
 
-	/*	UserModel.Name = nameField.value;
-		UserModel.Writer = writeField.value;
-		UserModel.YearOfPublication = dateField.value;
-		UserModel.Category = categoryField.value;
-		UserModel.Count = countField.value;*/
+		/*	UserModel.Name = nameField.value;
+			UserModel.Writer = writeField.value;
+			UserModel.YearOfPublication = dateField.value;
+			UserModel.Category = categoryField.value;
+			UserModel.Count = countField.value;*/
 
 		return UserModel;
 	}

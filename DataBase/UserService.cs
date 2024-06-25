@@ -6,7 +6,7 @@ namespace LibraryERP.DataBase
 {
 	public class UserService : Servicable<UserModel>
 	{
-		public UserService(LibraryDbContext libraryDbContext, DbSet<UserModel> table) : base(libraryDbContext, table)
+		public UserService(LibraryDbContext libraryDbContext) : base(libraryDbContext, libraryDbContext.Users)
 		{
 		}
 	}

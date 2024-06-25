@@ -81,7 +81,7 @@
 				<DxButton class="p-2 flex-fill bd-highlight" RenderStyle="ButtonRenderStyle.Primary" onclick="@Cancel" Enabled="@cancelButton.isEnable">@cancelButton.value</DxButton>
 				<div style="margin-right: 5px;"></div> <!-- 5px boşluk -->
 				<DxButton class="p-2 flex-fill bd-highlight" RenderStyle="ButtonRenderStyle.Danger" onclick="@Delete" Enabled="@deleteButton.isEnable">@deleteButton.value</DxButton>
-			
+
 			</div>
 		</div>
 	</div>
@@ -108,6 +108,12 @@
 	</DxGrid>
 
 </div>
+
+<DxPopup HeaderText="Popup"
+		 @bind-Visible="@popupField.isEnable"
+		 BodyText="@popupField.value">
+</DxPopup>
+
 
 @code {
 
@@ -142,6 +148,8 @@
 	MyField<string> editButton = new();
 	MyField<string> cancelButton = new();
 	MyField<string> deleteButton = new();
+
+	MyField<string> popupField = new();
 
 
 	BookModel selectedBookModel;
@@ -242,6 +250,9 @@
 	{
 		BookModel bookModel = GetBookModel();
 
+		popupField.value = bookModel.Name + " isimli kitap başarıyla eklendi.";
+		popupField.isEnable = true;
+
 		await _bookService.AddAsync(bookModel);
 		bookModels.Add(bookModel);
 		StateHasChanged();
@@ -258,7 +269,11 @@
 		selectedBookModel.Category = model.Category;
 		selectedBookModel.Count = model.Count;
 
+		popupField.value = model.Name + " isimli kitap başarıyla güncellendi.";
+		popupField.isEnable = true;
+
 		_bookService.UpdateAsync(selectedBookModel);
+
 	}
 
 	BookModel GetBookModel()
