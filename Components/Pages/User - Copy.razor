@@ -1,0 +1,330 @@
+﻿@using LibraryERP.DataBase.Entity
+@using LibraryERP.DataBase
+
+@page "/user"
+
+<PageTitle>Uye</PageTitle>
+
+
+<style>
+	.form-group {
+		display: flex;
+		align-items: center;
+		padding-bottom: 10px;
+		justify-content: space-between;
+	}
+
+		.form-group label {
+			margin-right: 10px;
+		}
+
+	.input {
+		width: 80%;
+	}
+</style>
+
+
+
+<div class="container">
+
+	<div class="row">
+		<div class="col">
+			<div class="form-group">
+				<label>Kitap Adı</label>
+				<div class="input">
+					<DxTextBox @bind-Text="@nameField.value" Enabled="@nameField.isEnable" />
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label>Yazar</label>
+				<div class="input">
+					<DxTextBox @bind-Text="@writeField.value" Enabled="@writeField.isEnable" />
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label>Basım Yılı</label>
+				<div class="input">
+					<DxDateEdit @bind-Date="@dateField.value" Enabled="@dateField.isEnable"></DxDateEdit>
+				</div>
+			</div>
+
+		</div>
+
+		<div class="col">
+			<div class="form-group">
+				<label>Kategori</label>
+				<div class="input">
+					<DxComboBox Data="@categorys"
+								@bind-Value="@categoryField.value"
+								Enabled="@categoryField.isEnable"
+								CssClass="cw-480"
+								InputId="cbOverview" />
+				</div>
+			</div>
+
+			<div class="form-group">
+				<label>Adet</label>
+				<div class="input">
+					<DxSpinEdit @bind-Value="@countField.value" Enabled="@countField.isEnable" InputId="seOverview" />
+				</div>
+			</div>
+		</div>
+
+
+		<div class="col" style="align-content:center;">
+
+			<div class="d-flex bd-highlight">
+				<DxButton class="p-2 flex-fill bd-highlight" RenderStyle="ButtonRenderStyle.Success" onclick="@SaveButtonClick" Enabled="@saveButton.isEnable">@saveButton.value</DxButton>
+				<div style="margin-right: 5px;"></div> <!-- 5px boşluk -->
+				<DxButton class="p-2 flex-fill bd-highlight" RenderStyle="ButtonRenderStyle.Warning" onclick="@Edit" Enabled="@editButton.isEnable">@editButton.value</DxButton>
+				<div style="margin-right: 5px;"></div> <!-- 5px boşluk -->
+				<DxButton class="p-2 flex-fill bd-highlight" RenderStyle="ButtonRenderStyle.Primary" onclick="@Cancel" Enabled="@cancelButton.isEnable">@cancelButton.value</DxButton>
+				<div style="margin-right: 5px;"></div> <!-- 5px boşluk -->
+				<DxButton class="p-2 flex-fill bd-highlight" RenderStyle="ButtonRenderStyle.Danger" onclick="@Delete" Enabled="@deleteButton.isEnable">@deleteButton.value</DxButton>
+
+			</div>
+		</div>
+	</div>
+	<div>
+	</div>
+</div>
+
+<div style="margin-bottom: 20px;"></div> <!-- 20px boşluk -->
+
+<div>
+
+	<DxGrid Data="@UserModels" PageSize="15"
+			ColumnResizeMode="GridColumnResizeMode.NextColumn" TextWrapEnabled="false"
+			FocusedRowEnabled="true" FocusedRowChanged="OnFocusedRowChanged"
+			VirtualScrollingEnabled="false" HighlightRowOnHover="true">
+		<Columns>
+			<DxGridDataColumn FieldName="Id" />
+			<DxGridDataColumn FieldName="Name" />
+			<DxGridDataColumn FieldName="Writer" />
+			<DxGridDataColumn FieldName="YearOfPublication" />
+			<DxGridDataColumn FieldName="Category" />
+			<DxGridDataColumn FieldName="Count" />
+		</Columns>
+	</DxGrid>
+
+</div>
+
+@code {
+
+	readonly string[] saveButtonTexts = new string[] { "Ekle", "Kaydet", "Güncelle" };
+	readonly string[] categorys = new string[] { "Roman", "Bilim Kurgu", "Tarih", "Felsefe", "Çocuk Kitapları" };
+
+
+	enum SaveState { Add, Save, Update }
+
+	SaveState _saveButtonState;
+	SaveState SaveButtonState
+	{
+		get => _saveButtonState;
+		set
+		{
+			_saveButtonState = value;
+
+			saveButton.value = saveButtonTexts[(int)value];
+			saveButton.isEnable = true;
+
+		}
+
+	}
+
+	MyField<string> nameField = new();
+	MyField<string> writeField = new();
+	MyField<DateTime> dateField = new();
+	MyField<string> categoryField = new();
+	MyField<int> countField = new();
+
+	MyField<string> saveButton = new();
+	MyField<string> editButton = new();
+	MyField<string> cancelButton = new();
+	MyField<string> deleteButton = new();
+
+
+	UserModel selectedUserModel;
+
+	List<UserModel> UserModels { get; set; } = new();
+
+	UserService _userService;
+
+	protected override async Task OnInitializedAsync()
+	{
+		_userService = new UserService(new(WebApplication.CreateBuilder().Configuration));
+		UserModels = await _userService.GetAllAsync();
+		StateHasChanged(); // Değişiklikleri UI Bildirmek
+		await base.OnInitializedAsync();
+	}
+
+	protected override void OnInitialized()
+	{
+		SaveButtonState = SaveState.Add;
+
+		editButton.value = "Düzenle";
+		cancelButton.value = "İptal";
+		deleteButton.value = "Sil";
+
+		dateField.value = DateTime.Today;
+	}
+
+	void SaveButtonClick()
+	{
+		if (SaveButtonState == SaveState.Add)
+		{
+			SaveButtonState = SaveState.Save;
+			SetDefaultAllField();
+			SetActiveAllField(true);
+			cancelButton.isEnable = true;
+
+		}
+		else if (SaveButtonState == SaveState.Save)
+		{
+			SaveDataBase();
+
+			SetDefaultAllField();
+			SetActiveAllField(false);
+			SaveButtonState = SaveState.Add;
+		}
+		else if (SaveButtonState == SaveState.Update)
+		{
+			Update();
+
+			SetDefaultAllField();
+			SetActiveAllField(false);
+			SaveButtonState = SaveState.Add;
+		}
+
+	}
+	void Edit()
+	{
+		SaveButtonState = SaveState.Update;
+		editButton.isEnable = false;
+		deleteButton.isEnable = true;
+		cancelButton.isEnable = true;
+
+		SetActiveAllField(true);
+	}
+
+	async void Delete()
+	{
+		SaveButtonState = SaveState.Add;
+		editButton.isEnable = false;
+		cancelButton.isEnable = false;
+		deleteButton.isEnable = false;
+
+		SetActiveAllField(false);
+		SetDefaultAllField();
+
+		await _userService.DeleteAsync(selectedUserModel.Id);
+		UserModels.Remove(selectedUserModel);
+
+		selectedUserModel = null;
+
+		StateHasChanged();
+	}
+	void Cancel()
+	{
+
+		cancelButton.isEnable = false;
+		deleteButton.isEnable = true;
+		editButton.isEnable = true;
+
+		SaveButtonState = SaveState.Add;
+
+		if (selectedUserModel is not null)
+			SetAllField(selectedUserModel);
+		SetActiveAllField(false);
+
+	}
+	async void SaveDataBase()
+	{
+		UserModel UserModel = GetUserModel();
+
+		await _userService.AddAsync(UserModel);
+		UserModels.Add(UserModel);
+		StateHasChanged();
+
+	}
+
+	void Update()
+	{
+		UserModel model = GetUserModel();
+
+		/*selectedUserModel.Name = model.Name;
+		selectedUserModel.Writer = model.Writer;
+		selectedUserModel.YearOfPublication = model.YearOfPublication;
+		selectedUserModel.Category = model.Category;
+		selectedUserModel.Count = model.Count;*/
+
+		_userService.UpdateAsync(selectedUserModel);
+	}
+
+	UserModel GetUserModel()
+	{
+		UserModel UserModel = new();
+
+	/*	UserModel.Name = nameField.value;
+		UserModel.Writer = writeField.value;
+		UserModel.YearOfPublication = dateField.value;
+		UserModel.Category = categoryField.value;
+		UserModel.Count = countField.value;*/
+
+		return UserModel;
+	}
+
+	void SetDefaultAllField()
+	{
+		nameField.value = "";
+		writeField.value = "";
+		dateField.value = DateTime.Today;
+		categoryField.value = "";
+		countField.value = 0;
+	}
+
+	void SetAllField(UserModel UserModel)
+	{
+		/*nameField.value = UserModel.Name;
+		writeField.value = UserModel.Writer;
+		dateField.value = UserModel.YearOfPublication;
+		categoryField.value = UserModel.Category;
+		countField.value = UserModel.Count;*/
+	}
+
+	void SetActiveAllField(bool value)
+	{
+		nameField.isEnable = value;
+		writeField.isEnable = value;
+		dateField.isEnable = value;
+		categoryField.isEnable = value;
+		countField.isEnable = value;
+	}
+
+	void OnFocusedRowChanged(GridFocusedRowChangedEventArgs e)
+	{
+
+		if (e.DataItem == null) return;
+
+		selectedUserModel = e.DataItem as UserModel;
+
+		SetActiveAllField(false);
+		SetAllField(selectedUserModel);
+
+		SaveButtonState = SaveState.Add;
+		editButton.isEnable = true;
+		deleteButton.isEnable = true;
+		cancelButton.isEnable = false;
+
+	}
+
+	class MyField<T> // Değişkenleri almak ve aktifliğini belirlemek için
+	{
+		public T value { get; set; }
+		public bool isEnable { get; set; }
+
+
+	}
+}
