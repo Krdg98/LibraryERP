@@ -154,7 +154,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		//_userService = new UserService(new(WebApplication.CreateBuilder().Configuration));
+		_userService = new UserService(new(WebApplication.CreateBuilder().Configuration));
 		UserModels = await _userService.GetAllAsync();
 		StateHasChanged(); // Değişiklikleri UI Bildirmek
 		await base.OnInitializedAsync();
